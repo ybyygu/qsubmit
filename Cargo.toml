@@ -1,4 +1,4 @@
-# [[file:~/Workspace/Programming/gosh-rs/qsubmit/qsubmit.note::*cargo][cargo:1]]
+# [[file:qsubmit.note::*cargo][cargo:1]]
 [package]
 name = "qsubmit"
 version = "0.0.1"
@@ -6,6 +6,10 @@ edition = "2018"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
+gut = { version = "0.1", package = "gchemol-gut" }
+duct = "0.13.5"
+structopt = "0.3"
+tempfile = "3"
 
 [dev-dependencies]
 # cargo:1 ends here
