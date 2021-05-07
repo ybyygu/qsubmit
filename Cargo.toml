@@ -6,10 +6,13 @@ edition = "2018"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
+structopt="0.3"    
 gut = { version = "0.1", package = "gchemol-gut" }
 duct = "0.13.5"
-structopt = "0.3"
+# structopt = "0.3"
 tempfile = "3"
+clap = "3.0.0-beta.2"
+clap_generate = "3.0.0-beta.2"
 
 [dev-dependencies]
 # cargo:1 ends here

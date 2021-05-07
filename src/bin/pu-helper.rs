@@ -1,16 +1,16 @@
 // [[file:../../qsubmit.note::*bin/pu_helper.rs][bin/pu_helper.rs:1]]
+use clap::{ArgEnum, Clap, IntoApp};
 use gut::prelude::*;
 use std::path::{Path, PathBuf};
-use structopt::*;
 
 /// A simple file queue system.
-#[derive(StructOpt, Debug)]
+#[derive(Clap)]
 struct Cli {
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     task: SubTask,
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(Clap)]
 enum SubTask {
     /// Display the log output of finished tasks on `node`
     Log {
@@ -49,10 +49,13 @@ enum SubTask {
         /// The name of symbolic link
         qname: Option<String>,
     },
+
+    /// Generate bash shell completion script
+    Init {},
 }
 
 fn main() -> Result<()> {
-    let args = Cli::from_args();
+    let args = Cli::parse();
 
     let home = std::env::var("HOME").unwrap();
     match args.task {
@@ -100,6 +103,13 @@ fn main() -> Result<()> {
                 format!("{}/gjf/{}", home, script)
             };
             fs::symlink(Path::new(&script).canonicalize()?, dbg!(symlink))?;
+        }
+        // Generate bash completion script
+        SubTask::Init {} => {
+            use clap_generate::{generate, generators::Bash};
+
+            let mut app = Cli::into_app();
+            generate::<Bash, _>(&mut app, env!("CARGO_BIN_NAME"), &mut std::io::stdout());
         }
         _ => {
             todo!();
