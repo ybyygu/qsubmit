@@ -19,20 +19,11 @@ struct Cli {
     watch: bool,
 }
 
-fn sleep(n: u64) {
-    use std::{thread, time};
-
-    let ten_millis = time::Duration::from_secs(n);
-    let now = time::Instant::now();
-
-    thread::sleep(ten_millis);
-}
-
 pub fn enter_main_loop() -> Result<()> {
     let args = Cli::from_args();
     args.verbose.setup_logger();
 
-    let scan_rate = 2;
+    let scan_rate = 2.0;
     loop {
         match get_next_job_from_qdir(&args.qdir, true) {
             Ok(q) => {
@@ -42,7 +33,7 @@ pub fn enter_main_loop() -> Result<()> {
             Err(e) => {
                 if args.watch {
                     info!("waiting {} seconds for new job ....", scan_rate);
-                    sleep(scan_rate);
+                    gut::utils::sleep(scan_rate);
                 } else {
                     return Err(e);
                 }
