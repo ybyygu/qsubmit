@@ -25,7 +25,7 @@ pub fn enter_main_loop() -> Result<()> {
 
     let scan_rate = 2.0;
     loop {
-        match get_next_job_from_qdir(&args.qdir, true) {
+        match get_next_job_from_qdir(&args.qdir) {
             Ok(q) => {
                 let o = execute_job(dbg!(&q))?;
                 dbg!(o);

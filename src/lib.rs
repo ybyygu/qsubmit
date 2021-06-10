@@ -13,7 +13,11 @@ pub use cmd::enter_main_loop;
 // [[file:../qsubmit.note::*core][core:1]]
 /// Return full path to an executable symlink from queue directory, ordered by
 /// names
-pub(crate) fn get_next_job_from_qdir(qdir: &Path, archive: bool) -> Result<PathBuf> {
+pub fn get_next_job_from_qdir(qdir: &Path) -> Result<PathBuf> {
+    get_next_job_from_qdir_(qdir, true)
+}
+
+fn get_next_job_from_qdir_(qdir: &Path, archive: bool) -> Result<PathBuf> {
     // ignore sub directories
     let mut queued = vec![];
 
@@ -35,17 +39,24 @@ pub(crate) fn get_next_job_from_qdir(qdir: &Path, archive: bool) -> Result<PathB
     queued.sort();
     queued.reverse();
 
-    if let Some(f) = queued.pop() {
+    // NOTE: If the job removed by others instantly, we simply ignore it and try
+    // the next one
+    while let Some(f) = queued.pop() {
         // NOTE: symbolic links will be resolved
-        let f_real = f.canonicalize()?;
-        // remove this job in queue to avoid double-submission
-        if archive {
-            archive_job(&f)?;
+        match f.canonicalize() {
+            Ok(f_real) => {
+                // remove this job in queue to avoid double-submission
+                if archive {
+                    archive_job(&f)?;
+                }
+                return Ok(f_real);
+            }
+            Err(e) => {
+                error!("get queued job error: {:?}", e);
+            }
         }
-        Ok(f_real)
-    } else {
-        bail!("No queued job found in {:?}", qdir)
     }
+    bail!("No queued job found in {:?}", qdir)
 }
 
 /// Exucute the script in a controlled way, returning script stdout
@@ -62,9 +73,7 @@ pub(crate) fn execute_job(job: &Path) -> Result<String> {
 /// Remove job from queue dir
 pub(crate) fn archive_job(job: &Path) -> Result<()> {
     info!("archiving job {:?}", job);
-
     std::fs::remove_file(job).with_context(|| format!("failed to remove {:?}", job))?;
-
     Ok(())
 }
 
@@ -78,7 +87,7 @@ fn is_executable(path: &Path) -> bool {
 
 #[test]
 fn test_q() -> Result<()> {
-    let q = get_next_job_from_qdir("tests/queue".as_ref(), false)?;
+    let q = get_next_job_from_qdir_("tests/queue".as_ref(), false)?;
     let q_expected: &Path = "tests/queue/00-real.sh".as_ref();
     assert_eq!(dbg!(&q), &q_expected.canonicalize()?);
 
