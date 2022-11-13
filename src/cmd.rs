@@ -1,26 +1,25 @@
-// [[file:../qsubmit.note::*cmd.rs][cmd.rs:1]]
+// [[file:../qsubmit.note::69e4da5e][69e4da5e]]
 use crate::*;
 use gut::cli::*;
 use gut::prelude::*;
-use structopt::*;
 
 /// A simple file queue system.
 #[derive(StructOpt, Debug, Default)]
 struct Cli {
-    #[structopt(flatten)]
+    #[command(flatten)]
     verbose: gut::cli::Verbosity,
 
     /// The path to queue dir.
-    #[structopt(name = "QUEUE-DIR", long = "qdir", short = "q")]
+    #[arg(name = "QUEUE-DIR", long, short)]
     qdir: PathBuf,
 
     /// Continue to Watch queue dir for new jobs
-    #[structopt(short)]
+    #[arg(short)]
     watch: bool,
 }
 
 pub fn enter_main_loop() -> Result<()> {
-    let args = Cli::from_args();
+    let args = Cli::parse();
     args.verbose.setup_logger();
 
     let scan_rate = 2.0;
@@ -41,4 +40,4 @@ pub fn enter_main_loop() -> Result<()> {
         }
     }
 }
-// cmd.rs:1 ends here
+// 69e4da5e ends here

@@ -1,18 +1,24 @@
-# [[file:qsubmit.note::*cargo][cargo:1]]
+# [[file:qsubmit.note::69fb4774][69fb4774]]
 [package]
 name = "qsubmit"
 version = "0.0.3"
-edition = "2018"
+edition = "2021"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
-structopt="0.3"    
-gut = { version = "0.1.6", package = "gchemol-gut" }
+gut = { version = "0.4", package = "gchemol-gut" }
 duct = "0.13.5"
-# structopt = "0.3"
 tempfile = "3"
-clap = "3.0.0-beta.2"
-clap_generate = "3.0.0-beta.2"
+clap = { version = "4", features = ["derive"] }
+clap_complete = "4.0.5"
+pueue-lib = "0.13.1"
+pueue = "1"
+
+# workspace independent
+[workspace]
 
 [dev-dependencies]
-# cargo:1 ends here
+
+[patch.crates-io]
+gchemol-gut = { path = "/home/ybyygu/Workspace/Programming/gchemol-rs/gut" }
+# 69fb4774 ends here

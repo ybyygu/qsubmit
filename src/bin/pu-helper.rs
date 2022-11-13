@@ -1,16 +1,16 @@
-// [[file:../../qsubmit.note::*bin/pu_helper.rs][bin/pu_helper.rs:1]]
-use clap::{ArgEnum, Clap, IntoApp};
+// [[file:../../qsubmit.note::d80b45c3][d80b45c3]]
+use gut::cli::*;
 use gut::prelude::*;
 use std::path::{Path, PathBuf};
 
 /// A simple file queue system.
-#[derive(Clap)]
+#[derive(Parser)]
 struct Cli {
-    #[clap(subcommand)]
+    #[command(subcommand)]
     task: SubTask,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 enum SubTask {
     /// Display the log output of finished tasks on `node`
     Log {
@@ -106,10 +106,10 @@ fn main() -> Result<()> {
         }
         // Generate bash completion script
         SubTask::Init {} => {
-            use clap_generate::{generate, generators::Bash};
+            use clap_complete::{generate, shells::Bash};
 
-            let mut app = Cli::into_app();
-            generate::<Bash, _>(&mut app, env!("CARGO_BIN_NAME"), &mut std::io::stdout());
+            let mut app = Cli::command();
+            generate(Bash, &mut app, env!("CARGO_BIN_NAME"), &mut std::io::stdout());
         }
         _ => {
             todo!();
@@ -118,4 +118,4 @@ fn main() -> Result<()> {
 
     Ok(())
 }
-// bin/pu_helper.rs:1 ends here
+// d80b45c3 ends here
