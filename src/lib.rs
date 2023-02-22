@@ -16,4 +16,6 @@ mod common {
 
 // [[file:../qsubmit.note::260cb747][260cb747]]
 pub mod cli;
+
+pub use queue::JobFileQueue;
 // 260cb747 ends here

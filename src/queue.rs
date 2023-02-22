@@ -3,10 +3,6 @@ use crate::common::*;
 use std::os::unix::fs::PermissionsExt;
 // 137346a7 ends here
 
-// [[file:../qsubmit.note::*base][base:1]]
-
-// base:1 ends here
-
 // [[file:../qsubmit.note::13360946][13360946]]
 fn get_next_job_from_qdir_(qdir: &Path, archive: bool) -> Result<PathBuf> {
     // ignore sub directories
@@ -98,3 +94,75 @@ pub fn get_next_job_from_qdir(qdir: &Path) -> Result<PathBuf> {
     get_next_job_from_qdir_(qdir, true)
 }
 // 043e97ca ends here
+
+// [[file:../qsubmit.note::24a8bc2e][24a8bc2e]]
+/// A simple job queue system for submission of files in a directory.
+#[derive(Debug)]
+pub struct JobFileQueue {
+    /// The path to queue dir.
+    qdir: PathBuf,
+
+    /// Continue to Watch queue dir for new jobs
+    watch: bool,
+
+    /// Wait `scan_delay` seconds periodically for new job if `qdir`
+    /// is empty
+    scan_delay: f64,
+}
+
+impl JobFileQueue {
+    /// Construct `JobFileQueue` from queue directory in `qdir`.
+    pub fn from_path(qdir: &Path) -> Self {
+        Self {
+            qdir: qdir.to_owned(),
+            watch: true,
+            scan_delay: 2.0,
+        }
+    }
+
+    /// Set scan delay for new job in queue directory.
+    pub fn set_scan_delay(&mut self, delay: f64) {
+        assert!(delay.is_sign_positive(), "invalid delay: {delay}");
+        self.scan_delay = delay;
+    }
+}
+
+impl JobFileQueue {
+    /// Return full path to an executable symlink from queue
+    /// directory, ordered by names
+    pub fn get_next_job(&self) -> Result<PathBuf> {
+        let scan_delay = self.scan_delay;
+        loop {
+            match get_next_job_from_qdir(&self.qdir) {
+                Ok(q) => break Ok(q),
+                Err(e) => {
+                    if self.watch {
+                        info!("waiting {scan_delay} seconds for new job ....");
+                        gut::utils::sleep(scan_delay);
+                    } else {
+                        break Err(e);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Enqueue the `script` to directory as a symlink in `name`.
+    pub fn enqueue<'a>(&self, script: &Path, name: impl Into<Option<&'a Path>>) -> Result<()> {
+        use std::os::unix::fs;
+        ensure!(script.is_file(), "invalid script path: {:?}", script);
+
+        let mut symlink = self.qdir.to_owned();
+        if let Some(name) = name.into() {
+            symlink.push(name);
+        } else {
+            let file = script.file_name().unwrap();
+            symlink.push(file);
+        };
+        let script = Path::new(&script).canonicalize()?;
+        info!("enqueue {script:?} as {symlink:?}");
+        fs::symlink(script, symlink)?;
+        Ok(())
+    }
+}
+// 24a8bc2e ends here
