@@ -1,7 +1,7 @@
 # [[file:qsubmit.note::69fb4774][69fb4774]]
 [package]
 name = "qsubmit"
-version = "0.0.3"
+version = "0.1.0"
 edition = "2021"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
@@ -14,11 +14,5 @@ clap_complete = "4.0.5"
 pueue-lib = "0.13.1"
 pueue = "1"
 
-# workspace independent
-[workspace]
-
 [dev-dependencies]
-
-[patch.crates-io]
-gchemol-gut = { path = "/home/ybyygu/Workspace/Programming/gchemol-rs/gut" }
 # 69fb4774 ends here
