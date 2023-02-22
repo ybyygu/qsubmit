@@ -11,8 +11,7 @@ duct = "0.13.5"
 tempfile = "3"
 clap = { version = "4", features = ["derive"] }
 clap_complete = "4.0.5"
-pueue-lib = "0.13.1"
-pueue = "1"
+# pueue = "1"
 
 [dev-dependencies]
 # 69fb4774 ends here

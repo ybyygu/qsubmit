@@ -1,8 +1,8 @@
-// [[file:../qsubmit.note::*main.rs][main.rs:1]]
+// [[file:../qsubmit.note::a88bad9f][a88bad9f]]
 use gut::prelude::*;
 
 fn main() -> Result<()> {
-    qsubmit::enter_main_loop()?;
+    qsubmit::cli::Qsubmit::enter_main_loop()?;
     Ok(())
 }
-// main.rs:1 ends here
+// a88bad9f ends here
