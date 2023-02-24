@@ -22,7 +22,7 @@ fn get_next_job_from_qdir_(qdir: &Path, archive: bool) -> Result<PathBuf> {
             queued.push(path);
         }
     }
-    info!("Found {} queued jobs in {:?}", queued.len(), qdir);
+    debug!("Found {} queued jobs in {:?}", queued.len(), qdir);
     queued.sort();
     queued.reverse();
 
@@ -75,6 +75,66 @@ fn test_q() -> Result<()> {
     Ok(())
 }
 // 13360946 ends here
+
+// [[file:../qsubmit.note::da24a95b][da24a95b]]
+use tokio::fs;
+// use tokio_stream::{wrappers::ReadDirStream, StreamExt};
+
+async fn read_symlinked_jobs(qdir: &Path) -> Result<Vec<PathBuf>> {
+    // ignore sub directories
+    let mut queued = vec![];
+    let mut read_dir = fs::read_dir(qdir).await?;
+    while let Some(entry) = read_dir.next_entry().await? {
+        let path = entry.path();
+        let file_type = entry
+            .file_type()
+            .await
+            .with_context(|| format!("Couldn't get file type for {:?}", path))?;
+        // get execuable scripts only
+        if file_type.is_symlink() && is_executable(&path) {
+            queued.push(path);
+        }
+    }
+    queued.sort();
+    queued.reverse();
+    Ok(queued)
+}
+
+async fn sleep(delay: f64) {
+    use tokio::time::{sleep, Duration};
+    sleep(Duration::from_secs_f64(delay)).await;
+}
+
+async fn take_next_job(qdir: &Path, archive: bool) -> Result<PathBuf> {
+    let mut queued = read_symlinked_jobs(qdir).await?;
+    trace!("Found {} queued jobs in {:?}", queued.len(), qdir);
+
+    // NOTE: If the job removed by others instantly, we simply ignore it and try
+    // the next one
+    while let Some(f) = queued.pop() {
+        // NOTE: symbolic links will be resolved
+        match f.canonicalize() {
+            Ok(f_real) => {
+                // remove this job in queue to avoid double-submission
+                if archive {
+                    archive_job(&f)?;
+                }
+                return Ok(f_real);
+            }
+            Err(e) => {
+                error!("get queued job error: {:?}", e);
+            }
+        }
+    }
+    bail!("No queued job found in {:?}", qdir)
+}
+
+#[tokio::test]
+async fn test_read_jobs() {
+    let jobs = read_symlinked_jobs("tests/queue".as_ref()).await.unwrap();
+    assert_eq!(jobs.len(), 1);
+}
+// da24a95b ends here
 
 // [[file:../qsubmit.note::043e97ca][043e97ca]]
 /// Exucute the script in a controlled way, returning script stdout
@@ -130,15 +190,15 @@ impl JobFileQueue {
 impl JobFileQueue {
     /// Return full path to an executable symlink from queue
     /// directory, ordered by names
-    pub fn get_next_job(&self) -> Result<PathBuf> {
+    pub async fn take_next_job(&self) -> Result<PathBuf> {
         let scan_delay = self.scan_delay;
         loop {
-            match get_next_job_from_qdir(&self.qdir) {
+            match take_next_job(&self.qdir, true).await {
                 Ok(q) => break Ok(q),
                 Err(e) => {
                     if self.watch {
-                        info!("waiting {scan_delay} seconds for new job ....");
-                        gut::utils::sleep(scan_delay);
+                        trace!("waiting {scan_delay} seconds for new job ....");
+                        sleep(scan_delay).await;
                     } else {
                         break Err(e);
                     }

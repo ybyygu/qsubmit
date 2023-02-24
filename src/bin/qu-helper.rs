@@ -13,7 +13,8 @@ struct Cli {
 #[derive(Parser)]
 enum SubTask {
     /// List all jobs in queue-dir ~/jobs
-    Jobs {},
+    #[command(alias="ls")]
+    ListJobs {},
 
     /// Enqueue the `script` to ~/jobs
     Enqueue {
@@ -32,9 +33,9 @@ fn main() -> Result<()> {
 
     let home = std::env::var("HOME").unwrap();
     match args.task {
-        SubTask::Jobs {} => {
+        SubTask::ListJobs {} => {
             let o = duct::cmd!("bash", "-c", "ls -l ~/jobs/").read()?;
-            print!("{}", o);
+            println!("{}", o);
         }
         SubTask::Enqueue { script, qname } => {
             use std::os::unix::fs;
